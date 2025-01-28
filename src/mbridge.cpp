@@ -31,37 +31,37 @@ const char* help_options =
 "  * parity          - parity: E (even), O (odd), N (none) (default is none)\n"
 "  * stop (s)        - stop bits: 1, 1.5, 2\n"
 "  * tfb <timeout>   - timeout first byte for RTU or ASC (millisec, default is 3000)\n"
-"  * tib <timeout>   - timeout inter byte for RTU or ASC (millisec, default is 5)\n"
+"  * tib <timeout>   - timeout inter byte for RTU or ASC (millisec, default is 50)\n"
 ;
 
 void printTx(const Modbus::Char *source, const uint8_t* buff, uint16_t size)
 {
-    std::cout << source << " Tx: " << Modbus::bytesToString(buff, size) << '\n';
+    std::cout << source << " Tx: " << Modbus::bytesToString(buff, size) << std::endl;
 }
 
 void printRx(const Modbus::Char *source, const uint8_t* buff, uint16_t size)
 {
-    std::cout << source << " Rx: " << Modbus::bytesToString(buff, size) << '\n';
+    std::cout << source << " Rx: " << Modbus::bytesToString(buff, size) << std::endl;
 }
 
 void printTxAsc(const Modbus::Char *source, const uint8_t* buff, uint16_t size)
 {
-    std::cout << source << " Tx: " << Modbus::asciiToString(buff, size) << '\n';
+    std::cout << source << " Tx: " << Modbus::asciiToString(buff, size) << std::endl;
 }
 
 void printRxAsc(const Modbus::Char *source, const uint8_t* buff, uint16_t size)
 {
-    std::cout << source << " Rx: " << Modbus::asciiToString(buff, size) << '\n';
+    std::cout << source << " Rx: " << Modbus::asciiToString(buff, size) << std::endl;
 }
 
 void printNewConnection(const Modbus::Char *source)
 {
-    std::cout << "New connection: " << source << '\n';
+    std::cout << "New connection: " << source << std::endl;
 }
 
 void printCloseConnection(const Modbus::Char *source)
 {
-    std::cout << "Close connection: " << source << '\n';
+    std::cout << "Close connection: " << source << std::endl;
 }
 
 struct Options
@@ -286,42 +286,55 @@ void parseOptions(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-    parseOptions(argc, argv);
     const bool blocking = false;
     ModbusServerPort *srv;
     ModbusClientPort *cli;
+
+    cliOptions.type = Modbus::RTU;
+    cliOptions.ser.portName = "COM5";
+
+    parseOptions(argc, argv);
 
     switch (cliOptions.type)
     {
     case Modbus::RTU:
         cli = Modbus::createClientPort(Modbus::RTU, &cliOptions.ser, blocking);
+        cli->setObjectName("RTU:Client");
         cli->connect(&ModbusClientPort::signalTx, printTx);
         cli->connect(&ModbusClientPort::signalRx, printRx);
+        std::cout << "RTU:Client: " << cliOptions.ser.portName << std::endl;
         break;
     case Modbus::ASC:
         cli = Modbus::createClientPort(Modbus::ASC, &cliOptions.ser, blocking);
+        cli->setObjectName("ASC:Client");
         cli->connect(&ModbusClientPort::signalTx, printTxAsc);
         cli->connect(&ModbusClientPort::signalRx, printRxAsc);
+        std::cout << "ASC:Client: " << cliOptions.ser.portName << std::endl;
         break;
     default:
         cli = Modbus::createClientPort(Modbus::TCP, &cliOptions.tcp, blocking);
+        cli->setObjectName("TCP:Client");
         cli->connect(&ModbusClientPort::signalTx, printTx);
         cli->connect(&ModbusClientPort::signalRx, printRx);
+        std::cout << "TCP:Client: " << cliOptions.tcp.host << ":" << cliOptions.tcp.port << std::endl;
         break;
     }
-    cli->setObjectName(StringLiteral("Client"));
 
     switch (srvOptions.type)
     {
     case Modbus::RTU:
         srv = Modbus::createServerPort(cli, Modbus::RTU, &srvOptions.ser, blocking);
+        srv->setObjectName("RTU:Server");
         srv->connect(&ModbusServerPort::signalTx, printTx);
         srv->connect(&ModbusServerPort::signalRx, printRx);
+        std::cout << "RTU:Server: " << cliOptions.ser.portName << std::endl;
         break;
     case Modbus::ASC:
         srv = Modbus::createServerPort(cli, Modbus::ASC, &srvOptions.ser, blocking);
+        srv->setObjectName("ASC:Server");
         srv->connect(&ModbusServerPort::signalTx, printTxAsc);
         srv->connect(&ModbusServerPort::signalRx, printRxAsc);
+        std::cout << "ASC:Server: " << cliOptions.ser.portName << std::endl;
         break;
     default:
     {
@@ -329,16 +342,17 @@ int main(int argc, char **argv)
         tcp->setPort(cliOptions.tcp.port);
         tcp->setTimeout(cliOptions.tcp.timeout);
         srv = tcp;
+        srv->setObjectName("TCP:Server");
         srv->connect(&ModbusServerPort::signalTx, printTx);
         srv->connect(&ModbusServerPort::signalRx, printRx);
         srv->connect(&ModbusTcpServer::signalNewConnection, printNewConnection);
         srv->connect(&ModbusTcpServer::signalCloseConnection, printCloseConnection);
+        std::cout << "TCP:Server: " << cliOptions.tcp.port << std::endl;
     }
         break;
     }
-    cli->setObjectName(StringLiteral("Server"));
 
-    puts("mbridge starts ...");
+    std::cout << "mbridge starts ..." << std::endl;
     while (1)
     {
         srv->process();

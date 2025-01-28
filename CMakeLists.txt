@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5) # 2.2 - case insensitive syntax
 
-project(ModbusBridge VERSION 0.0.1 LANGUAGES CXX)
+project(ModbusBridge VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
@@ -21,7 +21,10 @@ if (NOT WIN32)
     #set(CMAKE_INSTALL_RPATH "\${ORIGIN}")
 endif()
 
+set(BUILD_SHARED_LIBS OFF)
+
 set(MB_QT_ENABLED OFF)
+set(MB_C_SUPPORT_DISABLE ON)
 add_subdirectory(modbus/src)
 
 add_subdirectory(src)
