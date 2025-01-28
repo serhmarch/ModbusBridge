@@ -2,8 +2,13 @@
 
 ## Overview
 
-ModbusBridge (`mbridge`) is a free, open-source Modbus bridge application written in C++. 
+ModbusBridge (`mbridge`) is a simple single-thread Modbus bridge application written in C++.
+
 It provides convertion between different type of Modbus protocol: `TCP`, `RTU`, `ASC`.
+
+It's free and open source software based on `ModbusLib` project:
+
+https://github.com/serhmarch/ModbusLib
 
 Application implements such Modbus functions as:
 * `1`  (`0x01`) - `READ_COILS`
@@ -48,6 +53,16 @@ Params <param> for client (-c) and server (-s):
   * stop (s)        - stop bits: 1, 1.5, 2
   * tfb <timeout>   - timeout first byte for RTU or ASC (millisec, default is 3000)
   * tib <timeout>   - timeout inter byte for RTU or ASC (millisec, default is 5)
+```
+
+Next example make Modbus bridge with TCP client part and RTU server part:
+```console
+> mbridge -ctype TCP -stype RTU -sserial COM5
+```
+
+Next example make Modbus bridge with ASC client part and TCP server part wich works on 503 TCP port:
+```console
+> mbridge -ctype ASC -cserial COM5 -stype TCP -sport 503
 ```
 
 ## Build using CMake
