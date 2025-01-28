@@ -52,7 +52,7 @@ Params <param> for client (-c) and server (-s):
   * parity          - parity: E (even), O (odd), N (none) (default is none)
   * stop (s)        - stop bits: 1, 1.5, 2
   * tfb <timeout>   - timeout first byte for RTU or ASC (millisec, default is 3000)
-  * tib <timeout>   - timeout inter byte for RTU or ASC (millisec, default is 5)
+  * tib <timeout>   - timeout inter byte for RTU or ASC (millisec, default is 50)
 ```
 
 Next example make Modbus bridge with TCP client part and RTU server part:
@@ -69,7 +69,7 @@ Next example make Modbus bridge with ASC client part and TCP server part wich wo
 
 1.  Build Tools
 
-    Previously you need to install c++ compiler kit, git and cmake itself (qt tools if needed).
+    Previously you need to install c++ compiler kit, git and cmake itself.
     Then set PATH env variable to find compliler, cmake, git etc.
 
 2.  Create project directory, move to it and clone repository:
