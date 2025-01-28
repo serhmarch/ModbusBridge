@@ -4,7 +4,7 @@
 
 ModbusBridge (`mbridge`) is a simple single-thread Modbus bridge application written in C++.
 
-It provides convertion between different type of Modbus protocol: `TCP`, `RTU`, `ASC`.
+It provides convertion between different types of Modbus protocol: `TCP`, `RTU`, `ASC`.
 
 It's free and open source software based on `ModbusLib` project:
 
@@ -32,8 +32,7 @@ Application implements such Modbus functions as:
 
 To show list of available parameters print:
 ```console
-$ mbridge -h
-Bad option: h
+$ mbridge -help
 Usage: mbridge [options]
 
 Options (-c client, -s server):
@@ -77,7 +76,7 @@ Next example make Modbus bridge with ASC client part and TCP server part wich wo
     $ cd ~
     $ mkdir src
     $ cd src
-    $ git clone https://github.com/serhmarch/ModbusBridge.git
+    $ git clone --recursive https://github.com/serhmarch/ModbusBridge.git
     ```
 
 3.  Create and/or move to directory for build output, e.g. `~/bin/ModbusBridge`:
