@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.5) # 2.2 - case insensitive syntax
+cmake_policy(SET CMP0077 NEW)
 
 project(ModbusBridge VERSION 0.1.0 LANGUAGES CXX)
 
@@ -22,7 +23,6 @@ if (NOT WIN32)
 endif()
 
 set(BUILD_SHARED_LIBS OFF)
-
 set(MB_QT_ENABLED OFF)
 set(MB_C_SUPPORT_DISABLE ON)
 add_subdirectory(modbus/src)

@@ -69,6 +69,7 @@ struct Options
     Modbus::ProtocolType   type ;
     Modbus::SerialSettings ser  ;
     Modbus::TcpSettings    tcp  ; 
+    Modbus::String sSerialPort;
 
     Options()
     {
@@ -79,7 +80,7 @@ struct Options
         tcp.host             = dTcp.host                 ;
         tcp.port             = dTcp.port                 ;
         tcp.timeout          = dTcp.timeout              ;
-        ser.portName         = dSer.portName             ;
+      //ser.portName         = dSer.portName             ;
         ser.baudRate         = dSer.baudRate             ;
         ser.dataBits         = dSer.dataBits             ;
         ser.parity           = dSer.parity               ;
@@ -87,6 +88,13 @@ struct Options
         ser.flowControl      = dSer.flowControl          ;
         ser.timeoutFirstByte = dSer.timeoutFirstByte     ;
         ser.timeoutInterByte = dSer.timeoutInterByte     ;
+
+        Modbus::List<Modbus::String> ports = Modbus::availableSerialPorts();
+        if (ports.size() > 0)
+            sSerialPort = *ports.begin();
+        else
+            sSerialPort = dSer.portName;
+        ser.portName = sSerialPort.c_str();
     }
 };
 Options cliOptions;
@@ -298,7 +306,6 @@ int main(int argc, char **argv)
     ModbusClientPort *cli;
 
     cliOptions.type = Modbus::RTU;
-    cliOptions.ser.portName = "COM5";
 
     parseOptions(argc, argv);
 
@@ -309,21 +316,21 @@ int main(int argc, char **argv)
         cli->setObjectName("RTU:Client");
         cli->connect(&ModbusClientPort::signalTx, printTx);
         cli->connect(&ModbusClientPort::signalRx, printRx);
-        std::cout << "RTU:Client: " << cliOptions.ser.portName << std::endl;
+        std::cout << srv->objectName() << ": " << cliOptions.ser.portName << std::endl;
         break;
     case Modbus::ASC:
         cli = Modbus::createClientPort(Modbus::ASC, &cliOptions.ser, blocking);
         cli->setObjectName("ASC:Client");
         cli->connect(&ModbusClientPort::signalTx, printTxAsc);
         cli->connect(&ModbusClientPort::signalRx, printRxAsc);
-        std::cout << "ASC:Client: " << cliOptions.ser.portName << std::endl;
+        std::cout << srv->objectName() << ": " << cliOptions.ser.portName << std::endl;
         break;
     default:
         cli = Modbus::createClientPort(Modbus::TCP, &cliOptions.tcp, blocking);
         cli->setObjectName("TCP:Client");
         cli->connect(&ModbusClientPort::signalTx, printTx);
         cli->connect(&ModbusClientPort::signalRx, printRx);
-        std::cout << "TCP:Client: " << cliOptions.tcp.host << ":" << cliOptions.tcp.port << std::endl;
+        std::cout << srv->objectName() << ": " << cliOptions.tcp.host << ":" << cliOptions.tcp.port << std::endl;
         break;
     }
 
@@ -334,14 +341,14 @@ int main(int argc, char **argv)
         srv->setObjectName("RTU:Server");
         srv->connect(&ModbusServerPort::signalTx, printTx);
         srv->connect(&ModbusServerPort::signalRx, printRx);
-        std::cout << "RTU:Server: " << cliOptions.ser.portName << std::endl;
+        std::cout << srv->objectName() << ": " << cliOptions.ser.portName << std::endl;
         break;
     case Modbus::ASC:
         srv = Modbus::createServerPort(cli, Modbus::ASC, &srvOptions.ser, blocking);
         srv->setObjectName("ASC:Server");
         srv->connect(&ModbusServerPort::signalTx, printTxAsc);
         srv->connect(&ModbusServerPort::signalRx, printRxAsc);
-        std::cout << "ASC:Server: " << cliOptions.ser.portName << std::endl;
+        std::cout << srv->objectName() << ": " << cliOptions.ser.portName << std::endl;
         break;
     default:
     {
@@ -354,7 +361,7 @@ int main(int argc, char **argv)
         srv->connect(&ModbusServerPort::signalRx, printRx);
         srv->connect(&ModbusTcpServer::signalNewConnection, printNewConnection);
         srv->connect(&ModbusTcpServer::signalCloseConnection, printCloseConnection);
-        std::cout << "TCP:Server: " << cliOptions.tcp.port << std::endl;
+        std::cout << srv->objectName() << ": " << cliOptions.tcp.port << std::endl;
     }
         break;
     }
