@@ -10,7 +10,7 @@ class mTcpBridge : public ModbusTcpServer
 public:
     mTcpBridge(ModbusClientPort *clientPort);
     ~mTcpBridge();
-
+    
 public:
     ModbusServerPort *createTcpPort(ModbusTcpSocket *socket) override;
     void deleteTcpPort(ModbusServerPort *port) override;

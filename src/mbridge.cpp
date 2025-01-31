@@ -1,5 +1,5 @@
 #include <iostream>
-
+#include <csignal>
 #include <vector>
 #include <thread>
 
@@ -284,6 +284,13 @@ void parseOptions(int argc, char **argv)
     }
 }
 
+volatile bool fRun = true;
+
+void signal_handler(int /*signal*/)
+{
+    fRun = false;
+}
+
 int main(int argc, char **argv)
 {
     const bool blocking = false;
@@ -352,10 +359,14 @@ int main(int argc, char **argv)
         break;
     }
 
+    std::signal(SIGINT, signal_handler);
     std::cout << "mbridge starts ..." << std::endl;
-    while (1)
+    while (fRun)
     {
         srv->process();
         Modbus::msleep(1);
     }
+    delete srv;
+    delete cli;
+    std::cout << "mbridge stopped" << std::endl;
 }

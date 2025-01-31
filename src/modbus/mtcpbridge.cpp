@@ -9,7 +9,9 @@ mTcpBridge::mTcpBridge(ModbusClientPort *clientPort) : ModbusTcpServer(static_ca
 
 mTcpBridge::~mTcpBridge()
 {
-    clearConnections();
+    // Note: need to call because clearConnections() internally calls deleteTcpPort()
+    // which is virtual function and it is not called in the destructor of the base class.
+    clearConnections(); 
 }
 
 ModbusServerPort *mTcpBridge::createTcpPort(ModbusTcpSocket *socket)
