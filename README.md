@@ -2,9 +2,10 @@
 
 ## Overview
 
-ModbusBridge (`mbridge`) is a simple single-thread Modbus bridge application written in C++.
+ModbusBridge (`mbridge`) is a simple single-thread Modbus bridge application that
+provides convertion between different types of Modbus protocol: `TCP`, `RTU`, `ASC`.
 
-It provides convertion between different types of Modbus protocol: `TCP`, `RTU`, `ASC`.
+It can be used, for instance, in Raspberry Pi computer to act as Modbus converter.
 
 It's free and open source software based on `ModbusLib` project:
 
@@ -54,14 +55,38 @@ Params <param> for client (-c) and server (-s):
   * tib <timeout>   - timeout inter byte for RTU or ASC (millisec, default is 50)
 ```
 
-Next example make Modbus bridge with TCP client part and RTU server part:
+Next example make Modbus bridge with RTU client part and TCP server part wich works on 502 TCP port:
 ```console
-> mbridge -ctype TCP -stype RTU -sserial COM5
-```
+> mbridge -stype TCP -ctype RTU -cserial COM6
+RTU:Client parameters:
+----------------------
+port    = COM6
+baud    = 9600
+data    = 8
+parity  = No
+stop    = 1
+flow    = No
+tfb     = 1000
+tib     = 50
 
-Next example make Modbus bridge with ASC client part and TCP server part wich works on 503 TCP port:
-```console
-> mbridge -ctype ASC -cserial COM5 -stype TCP -sport 503
+TCP:Server parameters:
+----------------------
+port    = 502
+timeout = 3000
+
+mbridge starts ...
+New connection: DESKTOP-TNLLA10:7512
+DESKTOP-TNLLA10:7512 Rx: 00 01 00 00 00 06 01 04 00 00 00 04
+RTU:Client Tx: 01 04 00 00 00 04 F1 C9
+RTU:Client Rx: 01 04 08 00 00 00 00 00 00 00 00 24 0D
+DESKTOP-TNLLA10:7512 Tx: 00 01 00 00 00 0B 01 04 08 00 00 00 00 00 00 00 00
+...
+DESKTOP-TNLLA10:7512 Rx: 00 05 00 00 00 06 01 04 00 00 00 04
+RTU:Client Tx: 01 04 00 00 00 04 F1 C9
+RTU:Client Rx: 01 04 08 00 00 00 00 00 00 00 00 24 0D
+DESKTOP-TNLLA10:7512 Tx: 00 05 00 00 00 0B 01 04 08 00 00 00 00 00 00 00 00
+Close connection: DESKTOP-TNLLA10:7512
+mbridge stopped
 ```
 
 ## Build using CMake

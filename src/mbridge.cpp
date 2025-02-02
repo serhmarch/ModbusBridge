@@ -292,6 +292,29 @@ void parseOptions(int argc, char **argv)
     }
 }
 
+void printPort(ModbusPort *port)
+{
+    switch (port->type())
+    {
+    case Modbus::RTU:
+    case Modbus::ASC:
+        std::cout << "port    = " << static_cast<ModbusSerialPort*>(port)->portName()         << std::endl <<
+                     "baud    = " << static_cast<ModbusSerialPort*>(port)->baudRate()         << std::endl <<
+                     "data    = " << (int)static_cast<ModbusSerialPort*>(port)->dataBits()    << std::endl <<
+                     "parity  = " << Modbus::sparity(static_cast<ModbusSerialPort*>(port)->parity()) << std::endl <<
+                     "stop    = " << Modbus::sstopBits(static_cast<ModbusSerialPort*>(port)->stopBits()) << std::endl <<
+                     "flow    = " << Modbus::sflowControl(static_cast<ModbusSerialPort*>(port)->flowControl()) << std::endl <<
+                     "tfb     = " << static_cast<ModbusSerialPort*>(port)->timeoutFirstByte() << std::endl <<
+                     "tib     = " << static_cast<ModbusSerialPort*>(port)->timeoutInterByte() << std::endl;
+        break;
+    default:
+        std::cout << "host    = " << static_cast<ModbusTcpPort*>(port)->host()    << std::endl <<
+                     "port    = " << static_cast<ModbusTcpPort*>(port)->port()    << std::endl <<
+                     "timeout = " << static_cast<ModbusTcpPort*>(port)->timeout() << std::endl;
+        break;
+    }
+}
+
 volatile bool fRun = true;
 
 void signal_handler(int /*signal*/)
@@ -316,21 +339,18 @@ int main(int argc, char **argv)
         cli->setObjectName("RTU:Client");
         cli->connect(&ModbusClientPort::signalTx, printTx);
         cli->connect(&ModbusClientPort::signalRx, printRx);
-        std::cout << cli->objectName() << ": " << cliOptions.ser.portName << std::endl;
         break;
     case Modbus::ASC:
         cli = Modbus::createClientPort(Modbus::ASC, &cliOptions.ser, blocking);
         cli->setObjectName("ASC:Client");
         cli->connect(&ModbusClientPort::signalTx, printTxAsc);
         cli->connect(&ModbusClientPort::signalRx, printRxAsc);
-        std::cout << cli->objectName() << ": " << cliOptions.ser.portName << std::endl;
         break;
     default:
         cli = Modbus::createClientPort(Modbus::TCP, &cliOptions.tcp, blocking);
         cli->setObjectName("TCP:Client");
         cli->connect(&ModbusClientPort::signalTx, printTx);
         cli->connect(&ModbusClientPort::signalRx, printRx);
-        std::cout << cli->objectName() << ": " << cliOptions.tcp.host << ":" << cliOptions.tcp.port << std::endl;
         break;
     }
 
@@ -341,14 +361,12 @@ int main(int argc, char **argv)
         srv->setObjectName("RTU:Server");
         srv->connect(&ModbusServerPort::signalTx, printTx);
         srv->connect(&ModbusServerPort::signalRx, printRx);
-        std::cout << srv->objectName() << ": " << cliOptions.ser.portName << std::endl;
         break;
     case Modbus::ASC:
         srv = Modbus::createServerPort(cli, Modbus::ASC, &srvOptions.ser, blocking);
         srv->setObjectName("ASC:Server");
         srv->connect(&ModbusServerPort::signalTx, printTxAsc);
         srv->connect(&ModbusServerPort::signalRx, printRxAsc);
-        std::cout << srv->objectName() << ": " << cliOptions.ser.portName << std::endl;
         break;
     default:
     {
@@ -361,10 +379,31 @@ int main(int argc, char **argv)
         srv->connect(&ModbusServerPort::signalRx, printRx);
         srv->connect(&ModbusTcpServer::signalNewConnection, printNewConnection);
         srv->connect(&ModbusTcpServer::signalCloseConnection, printCloseConnection);
-        std::cout << srv->objectName() << ": " << cliOptions.tcp.port << std::endl;
     }
         break;
     }
+
+    // Print Client params
+    std::cout << cli->objectName() << " parameters:" << std::endl
+              << "----------------------" << std::endl;
+    printPort(cli->port());
+    std::cout << std::endl;
+
+    // Print Server params
+    std::cout << srv->objectName() << " parameters:" << std::endl
+              << "----------------------" << std::endl;
+    switch (srv->type())
+    {
+    case Modbus::RTU:
+    case Modbus::ASC:
+        printPort(static_cast<ModbusServerResource*>(srv)->port());
+        break;
+    default:
+        std::cout << "port    = " << static_cast<ModbusTcpServer*>(srv)->port()    << std::endl <<
+                     "timeout = " << static_cast<ModbusTcpServer*>(srv)->timeout() << std::endl;
+        break;
+    }
+    std::cout << std::endl;
 
     std::signal(SIGINT, signal_handler);
     std::cout << "mbridge starts ..." << std::endl;
