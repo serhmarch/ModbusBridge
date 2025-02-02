@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.5) # 2.2 - case insensitive syntax
-cmake_policy(SET CMP0077 NEW)
+cmake_minimum_required(VERSION 3.13) # 2.2 - case insensitive syntax
+                                     # 3.13 included policy CMP0077
 
 project(ModbusBridge VERSION 0.1.0 LANGUAGES CXX)
 
