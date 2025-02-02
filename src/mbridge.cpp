@@ -316,21 +316,21 @@ int main(int argc, char **argv)
         cli->setObjectName("RTU:Client");
         cli->connect(&ModbusClientPort::signalTx, printTx);
         cli->connect(&ModbusClientPort::signalRx, printRx);
-        std::cout << srv->objectName() << ": " << cliOptions.ser.portName << std::endl;
+        std::cout << cli->objectName() << ": " << cliOptions.ser.portName << std::endl;
         break;
     case Modbus::ASC:
         cli = Modbus::createClientPort(Modbus::ASC, &cliOptions.ser, blocking);
         cli->setObjectName("ASC:Client");
         cli->connect(&ModbusClientPort::signalTx, printTxAsc);
         cli->connect(&ModbusClientPort::signalRx, printRxAsc);
-        std::cout << srv->objectName() << ": " << cliOptions.ser.portName << std::endl;
+        std::cout << cli->objectName() << ": " << cliOptions.ser.portName << std::endl;
         break;
     default:
         cli = Modbus::createClientPort(Modbus::TCP, &cliOptions.tcp, blocking);
         cli->setObjectName("TCP:Client");
         cli->connect(&ModbusClientPort::signalTx, printTx);
         cli->connect(&ModbusClientPort::signalRx, printRx);
-        std::cout << srv->objectName() << ": " << cliOptions.tcp.host << ":" << cliOptions.tcp.port << std::endl;
+        std::cout << cli->objectName() << ": " << cliOptions.tcp.host << ":" << cliOptions.tcp.port << std::endl;
         break;
     }
 
