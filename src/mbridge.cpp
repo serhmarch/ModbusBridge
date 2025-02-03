@@ -30,7 +30,7 @@ const char* help_options =
 "  * data (d)        - data bits (5-8, for RTU and ASC, default is 8)\n"
 "  * parity          - parity: E (even), O (odd), N (none) (default is none)\n"
 "  * stop (s)        - stop bits: 1, 1.5, 2 (default is 1)\n"
-"  * tfb <timeout>   - timeout first byte for RTU or ASC (millisec, default is 3000)\n"
+"  * tfb <timeout>   - timeout first byte for RTU or ASC (millisec, default is 1000)\n"
 "  * tib <timeout>   - timeout inter byte for RTU or ASC (millisec, default is 50)\n"
 "\n"
 "Examples:\n"
@@ -56,6 +56,27 @@ void printTxAsc(const Modbus::Char *source, const uint8_t* buff, uint16_t size)
 void printRxAsc(const Modbus::Char *source, const uint8_t* buff, uint16_t size)
 {
     std::cout << source << " Rx: " << Modbus::asciiToString(buff, size) << std::endl;
+}
+
+void printOpened(const Modbus::Char *source)
+{
+    std::cout << source << " opened" << std::endl;
+}
+
+void printClosed(const Modbus::Char *source)
+{
+    std::cout << source << " closed" << std::endl;
+}
+
+void printError(const Modbus::Char *source, Modbus::StatusCode status, const Modbus::Char *text)
+{
+    std::cout << source << " error (" << status << "):" << text << std::endl;
+}
+
+void printErrorSerialServer(const Modbus::Char *source, Modbus::StatusCode status, const Modbus::Char *text)
+{
+    if (status != Modbus::Status_BadSerialReadTimeout)
+        std::cout << source << " error (" << status << "):" << text << std::endl;
 }
 
 void printNewConnection(const Modbus::Char *source)
@@ -102,6 +123,7 @@ struct Options
         ser.portName = sSerialPort.c_str();
     }
 };
+
 Options cliOptions;
 Options srvOptions;
 
@@ -335,16 +357,12 @@ int main(int argc, char **argv)
 
     parseOptions(argc, argv);
 
-    if (cliOptions.type < 0)
+    if ((cliOptions.type < 0) || (srvOptions.type < 0))
     {
-        std::cout << "Client type is not set" << std::endl;
-        std::cout << help_options << std::endl;
-        return 1;
-    }
-
-    if (srvOptions.type < 0)
-    {
-        std::cout << "Server type is not set" << std::endl;
+        if (cliOptions.type < 0)
+            std::cout << "Client type is not set" << std::endl;
+        if (srvOptions.type < 0)
+            std::cout << "Server type is not set" << std::endl;
         std::cout << help_options << std::endl;
         return 1;
     }
@@ -370,6 +388,9 @@ int main(int argc, char **argv)
         cli->connect(&ModbusClientPort::signalRx, printRx);
         break;
     }
+    cli->connect(&ModbusClientPort::signalOpened, printOpened);
+    cli->connect(&ModbusClientPort::signalClosed, printClosed);
+    cli->connect(&ModbusClientPort::signalError , printError );
 
     switch (srvOptions.type)
     {
@@ -378,12 +399,14 @@ int main(int argc, char **argv)
         srv->setObjectName("RTU:Server");
         srv->connect(&ModbusServerPort::signalTx, printTx);
         srv->connect(&ModbusServerPort::signalRx, printRx);
+        srv->connect(&ModbusServerPort::signalError, printErrorSerialServer);
         break;
     case Modbus::ASC:
         srv = Modbus::createServerPort(cli, Modbus::ASC, &srvOptions.ser, blocking);
         srv->setObjectName("ASC:Server");
         srv->connect(&ModbusServerPort::signalTx, printTxAsc);
         srv->connect(&ModbusServerPort::signalRx, printRxAsc);
+        srv->connect(&ModbusServerPort::signalError, printErrorSerialServer);
         break;
     default:
     {
@@ -396,9 +419,12 @@ int main(int argc, char **argv)
         srv->connect(&ModbusServerPort::signalRx, printRx);
         srv->connect(&ModbusTcpServer::signalNewConnection, printNewConnection);
         srv->connect(&ModbusTcpServer::signalCloseConnection, printCloseConnection);
+        srv->connect(&ModbusServerPort::signalError, printError);
     }
         break;
     }
+    srv->connect(&ModbusServerPort::signalOpened, printOpened);
+    srv->connect(&ModbusServerPort::signalClosed, printClosed);
 
     // Print Client params
     std::cout << cli->objectName() << " parameters:" << std::endl

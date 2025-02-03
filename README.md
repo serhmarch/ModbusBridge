@@ -51,7 +51,7 @@ Params <param> for client (-c) and server (-s):
   * data (d)        - data bits (5-8, for RTU and ASC, default is 8)
   * parity          - parity: E (even), O (odd), N (none) (default is none)
   * stop (s)        - stop bits: 1, 1.5, 2 (default is 1)
-  * tfb <timeout>   - timeout first byte for RTU or ASC (millisec, default is 3000)
+  * tfb <timeout>   - timeout first byte for RTU or ASC (millisec, default is 1000)
   * tib <timeout>   - timeout inter byte for RTU or ASC (millisec, default is 50)
 
 Examples:
