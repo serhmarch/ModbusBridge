@@ -1,7 +1,7 @@
 #include <iostream>
 #include <csignal>
 #include <vector>
-#include <thread>
+//#include <thread>
 
 #include <ModbusServerResource.h>
 #include <ModbusClientPort.h>
@@ -13,7 +13,7 @@
 #include "modbus/mtcpclient.h"
 
 const char* help_options =
-"Usage: mbridge [options]\n"
+"Usage: mbridge -ctype <type> [-coptions] -stype <type> [-soptions]\n"
 "\n"
 "Options (-c client, -s server):\n"
 "  -help (-?) - show this help.\n"
@@ -21,17 +21,21 @@ const char* help_options =
 "  -s<param>  - param for server.\n"
 "\n"
 "Params <param> for client (-c) and server (-s):\n"
-"  * type (t) <type> - protocol type. Can be TCP, RTU or ASC (default is TCP)\n"
+"  * type (t) <type> - protocol type. Can be TCP, RTU or ASC (mandatory)\n"
 "  * host (h) <host> - remote TCP host name (localhost is default)\n"
 "  * port (p) <port> - remote TCP port (502 is default)\n"
 "  * tm <timeout>    - timeout for TCP (millisec, default is 3000)\n"
 "  * serial (sl)     - serial port name for RTU and ASC\n"
-"  * baud (b)        - baud rate (for RTU and ASC)\n"
-"  * data (d)        - data bits (5-8, for RTU and ASC)\n"
+"  * baud (b)        - baud rate (for RTU and ASC) (default is 9600)\n"
+"  * data (d)        - data bits (5-8, for RTU and ASC, default is 8)\n"
 "  * parity          - parity: E (even), O (odd), N (none) (default is none)\n"
-"  * stop (s)        - stop bits: 1, 1.5, 2\n"
+"  * stop (s)        - stop bits: 1, 1.5, 2 (default is 1)\n"
 "  * tfb <timeout>   - timeout first byte for RTU or ASC (millisec, default is 3000)\n"
 "  * tib <timeout>   - timeout inter byte for RTU or ASC (millisec, default is 50)\n"
+"\n"
+"Examples:\n"
+"  mbridge -stype TCP -ctype RTU -cserial COM6\n"
+"  mbridge -stype RTU -sserial /dev/ttyUSB0 -sbaud 19200 -ctype TCP -chost some.plc\n"
 ;
 
 void printTx(const Modbus::Char *source, const uint8_t* buff, uint16_t size)
@@ -76,7 +80,8 @@ struct Options
         const ModbusTcpPort::Defaults &dTcp = ModbusTcpPort ::Defaults::instance();
         const ModbusSerialPort::Defaults &dSer = ModbusSerialPort::Defaults::instance();
 
-        type                 = Modbus::TCP               ;
+        type                 = static_cast<Modbus::ProtocolType>(-1);
+
         tcp.host             = dTcp.host                 ;
         tcp.port             = dTcp.port                 ;
         tcp.timeout          = dTcp.timeout              ;
@@ -298,14 +303,14 @@ void printPort(ModbusPort *port)
     {
     case Modbus::RTU:
     case Modbus::ASC:
-        std::cout << "port    = " << static_cast<ModbusSerialPort*>(port)->portName()         << std::endl <<
-                     "baud    = " << static_cast<ModbusSerialPort*>(port)->baudRate()         << std::endl <<
-                     "data    = " << (int)static_cast<ModbusSerialPort*>(port)->dataBits()    << std::endl <<
-                     "parity  = " << Modbus::sparity(static_cast<ModbusSerialPort*>(port)->parity()) << std::endl <<
-                     "stop    = " << Modbus::sstopBits(static_cast<ModbusSerialPort*>(port)->stopBits()) << std::endl <<
-                     "flow    = " << Modbus::sflowControl(static_cast<ModbusSerialPort*>(port)->flowControl()) << std::endl <<
-                     "tfb     = " << static_cast<ModbusSerialPort*>(port)->timeoutFirstByte() << std::endl <<
-                     "tib     = " << static_cast<ModbusSerialPort*>(port)->timeoutInterByte() << std::endl;
+        std::cout << "port   = " << static_cast<ModbusSerialPort*>(port)->portName()         << std::endl <<
+                     "baud   = " << static_cast<ModbusSerialPort*>(port)->baudRate()         << std::endl <<
+                     "data   = " << (int)static_cast<ModbusSerialPort*>(port)->dataBits()    << std::endl <<
+                     "parity = " << Modbus::sparity(static_cast<ModbusSerialPort*>(port)->parity()) << std::endl <<
+                     "stop   = " << Modbus::sstopBits(static_cast<ModbusSerialPort*>(port)->stopBits()) << std::endl <<
+                     "flow   = " << Modbus::sflowControl(static_cast<ModbusSerialPort*>(port)->flowControl()) << std::endl <<
+                     "tfb    = " << static_cast<ModbusSerialPort*>(port)->timeoutFirstByte() << std::endl <<
+                     "tib    = " << static_cast<ModbusSerialPort*>(port)->timeoutInterByte() << std::endl;
         break;
     default:
         std::cout << "host    = " << static_cast<ModbusTcpPort*>(port)->host()    << std::endl <<
@@ -328,10 +333,22 @@ int main(int argc, char **argv)
     ModbusServerPort *srv;
     ModbusClientPort *cli;
 
-    cliOptions.type = Modbus::RTU;
-
     parseOptions(argc, argv);
 
+    if (cliOptions.type < 0)
+    {
+        std::cout << "Client type is not set" << std::endl;
+        std::cout << help_options << std::endl;
+        return 1;
+    }
+
+    if (srvOptions.type < 0)
+    {
+        std::cout << "Server type is not set" << std::endl;
+        std::cout << help_options << std::endl;
+        return 1;
+    }
+    
     switch (cliOptions.type)
     {
     case Modbus::RTU:
