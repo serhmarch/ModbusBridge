@@ -411,8 +411,8 @@ int main(int argc, char **argv)
     default:
     {
         mTcpBridge *tcp = new mTcpBridge(cli);
-        tcp->setPort(cliOptions.tcp.port);
-        tcp->setTimeout(cliOptions.tcp.timeout);
+        tcp->setPort(srvOptions.tcp.port);
+        tcp->setTimeout(srvOptions.tcp.timeout);
         srv = tcp;
         srv->setObjectName("TCP:Server");
         srv->connect(&ModbusServerPort::signalTx, printTx);
