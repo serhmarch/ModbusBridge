@@ -1,10 +1,13 @@
-cmake_minimum_required(VERSION 3.5) # 2.2 - case insensitive syntax
+cmake_minimum_required(VERSION 3.13) # 2.2 - case insensitive syntax
+                                     # 3.13 included policy CMP0077
 
 project(mbridge VERSION ${PROJECT_VERSION} LANGUAGES CXX)
 
 set(MBRIDGE_APP_NAME ${PROJECT_NAME})
 
 message("MBRIDGE: Start configure '${MBRIDGE_APP_NAME}'")
+
+configure_file(${CMAKE_CURRENT_LIST_DIR}/mbridge_config.h.in ${CMAKE_CURRENT_LIST_DIR}/mbridge_config.h)
 
 set(HEADERS
     modbus/mtcpclient.h

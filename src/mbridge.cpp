@@ -1,7 +1,6 @@
 #include <iostream>
 #include <csignal>
 #include <vector>
-//#include <thread>
 
 #include <ModbusServerResource.h>
 #include <ModbusClientPort.h>
@@ -9,6 +8,7 @@
 #include <ModbusRtuPort.h>
 #include <ModbusAscPort.h>
 
+#include "mbridge_config.h"
 #include "modbus/mtcpbridge.h"
 #include "modbus/mtcpclient.h"
 
@@ -16,9 +16,10 @@ const char* help_options =
 "Usage: mbridge -ctype <type> [-coptions] -stype <type> [-soptions]\n"
 "\n"
 "Options (-c client, -s server):\n"
-"  -help (-?) - show this help.\n"
-"  -c<param>  - param for client.\n"
-"  -s<param>  - param for server.\n"
+"  --version (-v) - show program version.\n"
+"  --help (-?)    - show this help.\n"
+"  -c<param>      - param for client.\n"
+"  -s<param>      - param for server.\n"
 "\n"
 "Params <param> for client (-c) and server (-s):\n"
 "  * type (t) <type> - protocol type. Can be TCP, RTU or ASC (mandatory)\n"
@@ -133,27 +134,26 @@ void parseOptions(int argc, char **argv)
     for (int i = 1; i < argc; i++)
     {
         char *opt = argv[i];
-        if (opt[0] != '-')
+        if (!strcmp(opt, "--version") || !strcmp(opt, "-v"))
         {
-            printf("Bad option: %s. Option must have '-' (dash) before its name\n", opt);
-            puts(help_options);
-            exit(1);
+            puts("mbridge  : " MBRIDGE_VERSION_STR "\n"
+                 "ModbusLib: " MODBUSLIB_VERSION_STR);
+            exit(0);
         }
-        ++opt; // pass '-' (dash)
-        if (!strcmp(opt, "help") || !strcmp(opt, "?"))
+        if (!strcmp(opt, "--help") || !strcmp(opt, "-?"))
         {
             puts(help_options);
             exit(0);
         }
-        else if (opt[0] == 'c')
+        else if (!strncmp(opt, "-c", 2))
         {
             options = &cliOptions;
-            ++opt;
+            opt += 2;
         }
-        else if (opt[0] == 's')
+        else if (!strncmp(opt, "-s", 2))
         {
             options = &srvOptions;
-            ++opt;
+            opt += 2;
         }
         else
         {

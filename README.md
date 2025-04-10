@@ -33,13 +33,14 @@ Application implements such Modbus functions as:
 
 To show list of available parameters print:
 ```console
-$ mbridge -help
+$ mbridge --help
 Usage: mbridge -ctype <type> [-coptions] -stype <type> [-soptions]
 
 Options (-c client, -s server):
-  -help (-?) - show this help.
-  -c<param>  - param for client.
-  -s<param>  - param for server.
+  --version (-v) - show program version.
+  --help (-?)    - show this help.
+  -c<param>      - param for client.
+  -s<param>      - param for server.
 
 Params <param> for client (-c) and server (-s):
   * type (t) <type> - protocol type. Can be TCP, RTU or ASC (mandatory)
