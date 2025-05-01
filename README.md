@@ -33,7 +33,7 @@ Application implements such Modbus functions as:
 
 To show list of available parameters print:
 ```console
-$ mbridge --help
+$ mbridge -?
 Usage: mbridge -ctype <type> [-coptions] -stype <type> [-soptions]
 
 Options (-c client, -s server):
@@ -47,6 +47,7 @@ Params <param> for client (-c) and server (-s):
   * host (h) <host> - remote TCP host name (localhost is default)
   * port (p) <port> - remote TCP port (502 is default)
   * tm <timeout>    - timeout for TCP (millisec, default is 3000)
+  * maxconn <count> - max active TCP connections (millisec, default is 10)
   * serial (sl)     - serial port name for RTU and ASC
   * baud (b)        - baud rate (for RTU and ASC) (default is 9600)
   * data (d)        - data bits (5-8, for RTU and ASC, default is 8)
@@ -62,7 +63,7 @@ Examples:
 
 Next example makes Modbus bridge with RTU client part and TCP server part works on TCP port 502:
 ```console
-> mbridge -stype TCP -ctype RTU -cserial COM6
+> mbridge -stype TCP -smaxconn 5 -ctype RTU -cserial "COM6"
 RTU:Client parameters:
 ----------------------
 port   = COM6
@@ -78,19 +79,22 @@ TCP:Server parameters:
 ----------------------
 port    = 502
 timeout = 3000
+maxconn = 5
 
 mbridge starts ...
-New connection: DESKTOP-TNLLA10:7512
-DESKTOP-TNLLA10:7512 Rx: 00 01 00 00 00 06 01 04 00 00 00 04
-RTU:Client Tx: 01 04 00 00 00 04 F1 C9
-RTU:Client Rx: 01 04 08 00 00 00 00 00 00 00 00 24 0D
-DESKTOP-TNLLA10:7512 Tx: 00 01 00 00 00 0B 01 04 08 00 00 00 00 00 00 00 00
+TCP:Server opened
+New connection: 192.168.1.102:50392
+192.168.1.102:50392 Rx: 00 05 00 00 00 06 03 03 00 00 00 05
+RTU:Client opened
+RTU:Client Tx: 03 03 00 00 00 05 84 2B
+RTU:Client Rx: 03 03 0A 00 00 00 00 00 00 00 00 00 00 23 F4
+192.168.1.102:50392 Tx: 00 05 00 00 00 0D 03 03 0A 00 00 00 00 00 00 00 00 00 00
 ...
-DESKTOP-TNLLA10:7512 Rx: 00 05 00 00 00 06 01 04 00 00 00 04
-RTU:Client Tx: 01 04 00 00 00 04 F1 C9
-RTU:Client Rx: 01 04 08 00 00 00 00 00 00 00 00 24 0D
-DESKTOP-TNLLA10:7512 Tx: 00 05 00 00 00 0B 01 04 08 00 00 00 00 00 00 00 00
-Close connection: DESKTOP-TNLLA10:7512
+192.168.1.102:50392 Rx: 00 08 00 00 00 06 03 03 00 00 00 05
+RTU:Client Tx: 03 03 00 00 00 05 84 2B
+RTU:Client Rx: 03 03 0A 00 00 00 00 00 00 00 00 00 00 23 F4
+192.168.1.102:50392 Tx: 00 08 00 00 00 0D 03 03 0A 00 00 00 00 00 00 00 00 00 00
+Close connection: 192.168.1.102:50392
 mbridge stopped
 ```
 

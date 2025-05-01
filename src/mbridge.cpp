@@ -26,6 +26,7 @@ const char* help_options =
 "  * host (h) <host> - remote TCP host name (localhost is default)\n"
 "  * port (p) <port> - remote TCP port (502 is default)\n"
 "  * tm <timeout>    - timeout for TCP (millisec, default is 3000)\n"
+"  * maxconn <count> - max active TCP connections (millisec, default is 10)\n"
 "  * serial (sl)     - serial port name for RTU and ASC\n"
 "  * baud (b)        - baud rate (for RTU and ASC) (default is 9600)\n"
 "  * data (d)        - data bits (5-8, for RTU and ASC, default is 8)\n"
@@ -99,7 +100,7 @@ struct Options
 
     Options()
     {
-        const ModbusTcpPort::Defaults &dTcp = ModbusTcpPort ::Defaults::instance();
+        const ModbusTcpPort::Defaults &dTcp = ModbusTcpPort::Defaults::instance();
         const ModbusSerialPort::Defaults &dSer = ModbusSerialPort::Defaults::instance();
 
         type                 = static_cast<Modbus::ProtocolType>(-1);
@@ -107,6 +108,7 @@ struct Options
         tcp.host             = dTcp.host                 ;
         tcp.port             = dTcp.port                 ;
         tcp.timeout          = dTcp.timeout              ;
+        tcp.maxconn          = ModbusTcpServer::Defaults::instance().maxconn;
       //ser.portName         = dSer.portName             ;
         ser.baudRate         = dSer.baudRate             ;
         ser.dataBits         = dSer.dataBits             ;
@@ -213,6 +215,16 @@ void parseOptions(int argc, char **argv)
                 continue;
             }
             printf("'-tm' option must have an integer value\n");
+            exit(1);
+        }
+        if (!strcmp(opt, "maxconn"))
+        {
+            if (++i < argc)
+            {
+                options->tcp.maxconn = (uint32_t)atoi(argv[i]);
+                continue;
+            }
+            printf("'-maxconn' option must have an integer value\n");
             exit(1);
         }
         if (!strcmp(opt, "serial") || !strcmp(opt, "sl"))
@@ -413,6 +425,7 @@ int main(int argc, char **argv)
         mTcpBridge *tcp = new mTcpBridge(cli);
         tcp->setPort(srvOptions.tcp.port);
         tcp->setTimeout(srvOptions.tcp.timeout);
+        tcp->setMaxConnections(srvOptions.tcp.maxconn);
         srv = tcp;
         srv->setObjectName("TCP:Server");
         srv->connect(&ModbusServerPort::signalTx, printTx);
@@ -442,8 +455,9 @@ int main(int argc, char **argv)
         printPort(static_cast<ModbusServerResource*>(srv)->port());
         break;
     default:
-        std::cout << "port    = " << static_cast<ModbusTcpServer*>(srv)->port()    << std::endl <<
-                     "timeout = " << static_cast<ModbusTcpServer*>(srv)->timeout() << std::endl;
+        std::cout << "port    = " << static_cast<ModbusTcpServer*>(srv)->port()           << std::endl <<
+                     "timeout = " << static_cast<ModbusTcpServer*>(srv)->timeout()        << std::endl <<
+                     "maxconn = " << static_cast<ModbusTcpServer*>(srv)->maxConnections() << std::endl;
         break;
     }
     std::cout << std::endl;
