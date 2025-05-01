@@ -7,7 +7,7 @@ doc/output/
 TODO
 
 #ignore only cmake presets in root folder
-/CMakePresets.json
+/CMakeUserPresets.json
 
 ############################################
 ################## Python ##################
