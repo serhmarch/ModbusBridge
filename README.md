@@ -47,7 +47,7 @@ Params <param> for client (-c) and server (-s):
   * host (h) <host> - remote TCP host name (localhost is default)
   * port (p) <port> - remote TCP port (502 is default)
   * tm <timeout>    - timeout for TCP (millisec, default is 3000)
-  * maxconn <count> - max active TCP connections (millisec, default is 10)
+  * maxconn <count> - max active TCP connections (default is 10)
   * serial (sl)     - serial port name for RTU and ASC
   * baud (b)        - baud rate (for RTU and ASC) (default is 9600)
   * data (d)        - data bits (5-8, for RTU and ASC, default is 8)
