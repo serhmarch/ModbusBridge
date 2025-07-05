@@ -1,5 +1,8 @@
 #include <iostream>
 #include <csignal>
+#include <sstream>
+#include <cstdint>
+#include <algorithm>
 #include <vector>
 
 #include <ModbusServerResource.h>
@@ -34,6 +37,9 @@ const char* help_options =
 "  * stop (s)        - stop bits: 1, 1.5, 2 (default is 1)\n"
 "  * tfb <timeout>   - timeout first byte for RTU or ASC (millisec, default is 1000)\n"
 "  * tib <timeout>   - timeout inter byte for RTU or ASC (millisec, default is 50)\n"
+"\n"
+"Options for server:\n"
+"  -sunit (-su) <list> - list of units for server to responde like '1,3,6-10,11,27'\n"
 "\n"
 "Examples:\n"
 "  mbridge -stype TCP -ctype RTU -cserial COM6\n"
@@ -93,10 +99,10 @@ void printCloseConnection(const Modbus::Char *source)
 
 struct Options
 {
-    Modbus::ProtocolType   type ;
-    Modbus::SerialSettings ser  ;
-    Modbus::TcpSettings    tcp  ; 
-    Modbus::String sSerialPort;
+    Modbus::ProtocolType   type       ;
+    Modbus::SerialSettings ser        ;
+    Modbus::TcpSettings    tcp        ; 
+    Modbus::String         sSerialPort;
 
     Options()
     {
@@ -127,14 +133,91 @@ struct Options
     }
 };
 
+struct ServerOnlyOptions
+{
+    uint8_t *ptrunitmap{nullptr};
+    uint8_t unitmap[MB_UNITMAP_SIZE];
+};
+
 Options cliOptions;
 Options srvOptions;
+ServerOnlyOptions srvOnlyOptions;
+
+bool fillunitmap(const char *s, void *unitmap)
+{
+    std::istringstream ss(s);
+    std::string token;
+    bool res = false;
+    while (std::getline(ss, token, ','))
+    {
+        // Remove whitespace
+        token.erase(std::remove_if(token.begin(), token.end(), ::isspace), token.end());
+
+        if (token.empty())
+            continue;
+
+        auto dashPos = token.find('-');
+        if (dashPos != std::string::npos)
+        {
+            // It's a range: e.g., "5-10"
+            std::string startStr = token.substr(0, dashPos);
+            std::string endStr = token.substr(dashPos + 1);
+
+            int start = std::stoi(startStr);
+            int end = std::stoi(endStr);
+
+            if (start > end || start < 0 || end > 255)
+                continue; // optionally handle invalid input
+
+            for (int unit = start; unit <= end; ++unit)
+            {
+                MB_UNITMAP_SET_BIT(unitmap, unit, 1);
+                res = true;
+            }
+        }
+        else
+        {
+            // Single number
+            int unit = std::stoi(token);
+            if (unit < 0 || unit > 255)
+                continue; // optionally handle invalid input
+
+            MB_UNITMAP_SET_BIT(unitmap, unit, 1);
+            res = true;
+        }
+    }
+    return res;
+}
+
+void printunitmap(const void *unitmap)
+{
+    bool printed = false;
+    for (int unit = 0; unit <= 255; ++unit)
+    {
+        if (MB_UNITMAP_GET_BIT(unitmap, unit))
+        {
+            int next = unit;
+            for (++unit; MB_UNITMAP_GET_BIT(unitmap, unit) && (unit <= 255); ++unit)
+                next = unit;
+            if (printed)
+                std::cout << ",";
+            else
+                std::cout << "unit    = ";
+            if (next > unit)
+                std::cout << unit << '-' << next;
+            else
+                std::cout << unit;
+            printed = true;
+        }
+    }
+}
 
 void parseOptions(int argc, char **argv)
 {
     Options *options;
     for (int i = 1; i < argc; i++)
     {
+        bool srv;
         char *opt = argv[i];
         if (!strcmp(opt, "--version") || !strcmp(opt, "-v"))
         {
@@ -149,11 +232,13 @@ void parseOptions(int argc, char **argv)
         }
         else if (!strncmp(opt, "-c", 2))
         {
+            srv = false;
             options = &cliOptions;
             opt += 2;
         }
         else if (!strncmp(opt, "-s", 2))
         {
+            srv = true;
             options = &srvOptions;
             opt += 2;
         }
@@ -185,6 +270,20 @@ void parseOptions(int argc, char **argv)
                 }
             }
             printf("'-type' option must have a value: TCP, RTU or ASC\n");
+            exit(1);
+        }
+        if (!strcmp(opt, "unit") || !strcmp(opt, "u"))
+        {
+            if (srv && (++i < argc))
+            {
+                memset(srvOnlyOptions.unitmap, 0, sizeof(srvOnlyOptions.unitmap));
+                if (fillunitmap(argv[i], srvOnlyOptions.unitmap))
+                {
+                    srvOnlyOptions.ptrunitmap = srvOnlyOptions.unitmap;
+                }
+                continue;
+            }
+            printf("'-sunit' option (server-only) must have a value: list of unit like '1,3,6-10,11,27' \n");
             exit(1);
         }
         if (!strcmp(opt, "host") || !strcmp(opt, "h"))
@@ -460,6 +559,11 @@ int main(int argc, char **argv)
                      "maxconn = " << static_cast<ModbusTcpServer*>(srv)->maxConnections() << std::endl;
         break;
     }
+    if (srvOnlyOptions.ptrunitmap)
+    {
+        srv->setUnitMap(srvOnlyOptions.ptrunitmap);
+        printunitmap(srvOnlyOptions.ptrunitmap);
+    }    
     std::cout << std::endl;
 
     std::signal(SIGINT, signal_handler);
