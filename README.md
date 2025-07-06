@@ -56,6 +56,9 @@ Params <param> for client (-c) and server (-s):
   * tfb <timeout>   - timeout first byte for RTU or ASC (millisec, default is 1000)
   * tib <timeout>   - timeout inter byte for RTU or ASC (millisec, default is 50)
 
+Options for server:
+  -sunit (-su) <list> - list of units for server to responde like '1,3,6-10,11,27'
+
 Examples:
   mbridge -stype TCP -ctype RTU -cserial COM6
   mbridge -stype RTU -sserial /dev/ttyUSB0 -sbaud 19200 -ctype TCP -chost some.plc

@@ -196,17 +196,18 @@ void printunitmap(const void *unitmap)
     {
         if (MB_UNITMAP_GET_BIT(unitmap, unit))
         {
-            int next = unit;
+            int start = unit;
+            int end = unit;
             for (++unit; MB_UNITMAP_GET_BIT(unitmap, unit) && (unit <= 255); ++unit)
-                next = unit;
+                end = unit;
             if (printed)
                 std::cout << ",";
             else
                 std::cout << "unit    = ";
-            if (next > unit)
-                std::cout << unit << '-' << next;
+            if (start < end)
+                std::cout << start << '-' << end;
             else
-                std::cout << unit;
+                std::cout << start;
             printed = true;
         }
     }
@@ -217,7 +218,7 @@ void parseOptions(int argc, char **argv)
     Options *options;
     for (int i = 1; i < argc; i++)
     {
-        bool srv;
+        bool srv = false;
         char *opt = argv[i];
         if (!strcmp(opt, "--version") || !strcmp(opt, "-v"))
         {
